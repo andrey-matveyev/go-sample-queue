@@ -36,6 +36,24 @@ func (item *queue) pop() *Task {
 	return elem.Value.(*Task)
 }
 
+func InpQueue(inp chan *Task) *queue {
+	queue := newQueue()
+	go inpProcess(inp, queue)
+	return queue
+}
+
+func inpProcess(inp chan *Task, queue *queue) {
+	for value := range inp {
+		queue.push(value)
+
+		select {
+		case queue.innerChan <- struct{}{}:
+		default:
+		}
+	}
+	close(queue.innerChan)
+}
+
 type Task struct {
 	ID   int
 	Data string
