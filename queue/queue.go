@@ -2,6 +2,7 @@ package queue
 
 import (
 	"container/list"
+	"context"
 	"sync"
 )
 
@@ -52,6 +53,38 @@ func inpProcess(inp chan *Task, queue *queue) {
 		}
 	}
 	close(queue.innerChan)
+}
+
+func OutQueue(ctx context.Context, queue *queue) chan *Task {
+	out := make(chan *Task)
+	go outProcess(ctx, queue, out)
+	return out
+}
+
+func outProcess(ctx context.Context, queue *queue, out chan *Task) {
+	defer close(out)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case _, ok := <-queue.innerChan:
+			for {
+				task := queue.pop()
+				if task != nil {
+					select {
+					case out <- task:
+					case <-ctx.Done():
+						return
+					}
+				} else {
+					break
+				}
+			}
+			if !ok {
+				return
+			}
+		}
+	}
 }
 
 type Task struct {
