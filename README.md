@@ -1,4 +1,4 @@
-## implementation Queue for Go Pipelines based on container/list
+## Implementation Queue for Go Pipelines based on container/list
 
 
 
